@@ -33,17 +33,23 @@ initSyllable = do x <- vowel
                   return [x]
                <|> syllable
 
-particle = symbol "en" <|> symbol "li" <|> symbol "e" <|>
-           symbol "la" <|> symbol "anu" <|> symbol "pi"
+
+particles = ["en", "li", "e", "la", "anu", "pi"]
+preps = ["tawa", "tan", "kepeken", "lon", "sama"]
+preverbs =
+  ["kama", "ken", "wile", "lukin", "oko", "alasa", "sona", "awen", "pini"]
+
+particle = token $ strings particles
 
 content :: Parser Nimi
-content = token (do notP particle
-                    x <- initSyllable
+content = token (do x <- initSyllable
                     xs <- many syllable
-                    return (concat (x:xs)))
+                    let word = concat (x:xs)
+                    if not (word `elem` particles) 
+                       then return (concat (x:xs))
+                       else empty)
 
-prepNimi = symbol "tawa" <|> symbol "tan" <|> symbol "kepeken" <|>
-           symbol "lon" <|> symbol "sama" 
+prepNimi = token $ strings preps
 
 prep = do w <- prepNimi
           (do symbol "ala"
@@ -71,10 +77,7 @@ np = do w <- content
         ms <- many modifier
         return (NP w ms)
 
-preverbNimi = symbol "kama" <|> symbol "ken" <|> symbol "wile" <|>
-              symbol "lukin" <|> symbol "oko" <|> symbol "alasa" <|>
-              symbol "wile" <|> symbol "sona" <|> symbol "awen" <|>
-              symbol "pini" 
+preverbNimi = token $ strings preverbs
 
 preverb :: Parser Preverb
 preverb = do p <- preverbNimi
